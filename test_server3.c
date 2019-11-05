@@ -59,13 +59,14 @@ int main(int argc, char *argv[])
 		}
 
 		inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, temp, sizeof(temp));
+		// print client IP address		
 		printf("Server : %s client connected.\n", temp);
 
 		msg_size = read(client_fd, buffer, 1024);
 		printf("Message : %s\n", buffer);
 
 		char success_msg[] = "success\n";
-		write(client_fd, success_msg, 8);
+		write(client_fd, success_msg, sizeof(success_msg));
 		close(client_fd);
 		
 		printf("Server : %s client closed.\n", temp);

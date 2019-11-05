@@ -6,66 +6,88 @@
 
 using namespace std;
 
-string msg, params, name, hostIP, port;
+// need to localize the params for using as a header
+// string msg, params, name, hostIP, port;
+string ncCommand, uuid;
 int param1, param2;
 
-string getUUID()
+bool getUUID(string &uuid)
 {
-	char fileBuffer[50];
+	char tempBuffer[50];
 	FILE *fp;
 	fp = popen("sudo dmidecode -s system-uuid", "r");
-	fgets(fileBuffer, sizeof(fileBuffer), fp);
-	pclose(fp);
+
+	if(fp == NULL) return false;
+
+	fgets(tempBuffer, sizeof(tempBuffer), fp);
 	
-	string result(fileBuffer);
-	return result;
+	if(pclose(fp) == -1) return false;
+	
+	string tmp(tempBuffer);
+	uuid = tmp;
+
+	return true;
 }
 
-void init()
+bool init()
 {
+	//static string ncCommand, uuid;
+	//static int param1, param2;
+
+	string hostIP, port;
+
 	// get Host IP
+	// ifconfig | grep ****
 	hostIP = "0.0.0.0 ";
-	// get uuid sudo dmidecode -s system-uuid
-	name = getUUID();
 	// set port
 	port = "12345 ";
 
-	msg += "nc ";
-	msg += hostIP;
-	msg += port;
+	ncCommand += "nc ";
+	ncCommand += hostIP;
+	ncCommand += port;
+
+	if(getUUID(uuid) == false)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void setParams(int a, int b)
 {
 	param1 = a;
 	param2 = b;
-	params = "params1=";
-	params += ('0' + a);
-	params += " params2=";
-	params += ('0' + b);
 }
 
 bool sendMessage()
 {
-	string sys_msg = msg;
+	string sys_msg = ncCommand;
 	sys_msg += "< temp.txt";
 
-	string send_msg = " ";
-	send_msg += name;
-	send_msg += params;
+	string send_msg;
+	send_msg += uuid;
+	send_msg += " param1=";
+	send_msg += ('0' + param1);
+	send_msg += " param2=";
+	send_msg += ('0' + param2);
 
 	ofstream out("temp.txt");
 	out << send_msg << endl;
 	
-	char fileBuffer[50];
+	char tempBuffer[50];
 	FILE *fp;
 	fp = popen(sys_msg.c_str(), "r");
-	fgets(fileBuffer, sizeof(fileBuffer), fp);
-	pclose(fp);
-	string result(fileBuffer);
-	//system(sys_msg.c_str());
+
+	if(fp == NULL) return false;
+
+	fgets(tempBuffer, sizeof(tempBuffer), fp);
+	
+	if(pclose(fp) == -1) return false;;
+
+	string result(tempBuffer);
 	remove("./temp.txt");
-	//cout << result << endl;
+
 	if(result.find("success") != -1) return true;
 	else return false;
 }
