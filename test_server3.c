@@ -1,10 +1,11 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "time.h"
-#include "sys/types.h"
-#include "sys/socket.h"
-#include "netinet/in.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #define BUF_LEN 128
 
@@ -62,7 +63,8 @@ int main(int argc, char *argv[])
 		// print client IP address		
 		printf("Server : %s client connected.\n", temp);
 
-		msg_size = read(client_fd, buffer, 1024);
+		msg_size = read(client_fd, buffer, sizeof(buffer));
+		buffer[msg_size] = '\0';
 		printf("Message : %s\n", buffer);
 
 		char success_msg[] = "success\n";
