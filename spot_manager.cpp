@@ -2,62 +2,31 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string>
+#include "spot_manager.h"
 
 #define PORT_NUMBER 12345
 
 using namespace std;
 
-class spot_manager
-{
-private:
-	std::string ncCommand, myIP, hostIP;
-	std::string param1, param2;
-	int saveInterval;
-	float price;
-	bool initFlag;
-	void setPrice(float);
-
-	bool getMyIP();
-	bool getHostIP();
-	bool sendMessage(); 
-
-public:
-	spot_manager();
-	~spot_manager();
-	
-	bool init(float);
-	bool exit();
-
-	bool startAtom();
-	bool endAtom();
-	
-	bool changePrice(float);
-
-	bool startOndemand();
-	bool endOndemand();
-
-	bool changeSaveInterval(int);
-};
-
-spot_manager::spot_manager()
+SpotManager::SpotManager()
 {
 	saveInterval = 20;
 	price = 0.0;
 	initFlag = false;
 }
 
-spot_manager::~spot_manager()
+SpotManager::~SpotManager()
 {
 }
 
-void spot_manager::setPrice(float userPrice)
+void SpotManager::setPrice(float userPrice)
 {
 	price = userPrice;
 	param1 = "CHANGE_PRICE";
 	param2 = to_string(price);
 }
 
-bool spot_manager::getMyIP()
+bool SpotManager::getMyIP()
 {
 	char tempBuffer[50];
 	FILE *fp;
@@ -76,7 +45,7 @@ bool spot_manager::getMyIP()
 	return true;
 }
 
-bool spot_manager::getHostIP()
+bool SpotManager::getHostIP()
 {
 	char tempBuffer[500];
 	FILE *fp;
@@ -98,7 +67,7 @@ bool spot_manager::getHostIP()
 	return true;
 }
 
-bool spot_manager::sendMessage()
+bool SpotManager::sendMessage()
 {
 	if(initFlag == false)
 	{
@@ -121,9 +90,8 @@ bool spot_manager::sendMessage()
 	fp = popen(send_msg.c_str(), "r");
 
 	if(fp == NULL) return false;
-
+	
 	fgets(tempBuffer, sizeof(tempBuffer), fp);
-
 	if(pclose(fp) == -1) return false;;
 
 	string result(tempBuffer);
@@ -132,7 +100,7 @@ bool spot_manager::sendMessage()
 	else return false;
 }
 
-bool spot_manager::init(float userPrice)
+bool SpotManager::init(float userPrice)
 {
 	initFlag = true;
 
@@ -152,7 +120,7 @@ bool spot_manager::init(float userPrice)
 	return sendMessage();
 }
 
-bool spot_manager::exit()
+bool SpotManager::exit()
 {
 	// need to fill out something
 	param1 = "param1";
@@ -161,7 +129,7 @@ bool spot_manager::exit()
 	return sendMessage();
 }
 
-bool spot_manager::startAtom()
+bool SpotManager::startAtom()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_SPOT_NO_SAVE";
@@ -169,7 +137,7 @@ bool spot_manager::startAtom()
 	return sendMessage();
 }
 
-bool spot_manager::endAtom()
+bool SpotManager::endAtom()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_SPOT";
@@ -177,14 +145,14 @@ bool spot_manager::endAtom()
 	return sendMessage();
 }
 
-bool spot_manager::changePrice(float userPrice)
+bool SpotManager::changePrice(float userPrice)
 {
 	setPrice(userPrice);
 	
 	return sendMessage();
 }
 
-bool spot_manager::startOndemand()
+bool SpotManager::startOndemand()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_ONDEMAND";
@@ -192,7 +160,7 @@ bool spot_manager::startOndemand()
 	return sendMessage();
 }
 
-bool spot_manager::endOndemand()
+bool SpotManager::endOndemand()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_SPOT";
@@ -200,7 +168,7 @@ bool spot_manager::endOndemand()
 	return sendMessage();
 }
 
-bool spot_manager::changeSaveInterval(int interval)
+bool SpotManager::changeSaveInterval(int interval)
 {
 	saveInterval = interval;
 
@@ -212,11 +180,11 @@ bool spot_manager::changeSaveInterval(int interval)
 
 int main(void)
 {
-	spot_manager temp;
-	temp.init(0.0);
-
-	if(temp.changePrice(2.222)) cout << "success" << "\n";
-	else cout << "fail" << "\n";
+	SpotManager spot;
+	spot.init(1.5);
+	spot.startOndemand();
 
 	return 0;
 }
+
+
