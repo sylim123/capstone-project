@@ -1,11 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+#include "time.h"
+#include "sys/types.h"
+#include "sys/socket.h"
+#include "netinet/in.h"
 
 #define BUF_LEN 128
 
@@ -61,11 +60,16 @@ int main(int argc, char *argv[])
 
 		inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, temp, sizeof(temp));
 		// print client IP address		
-		printf("Server : %s client connected.\n", temp);
+		// printf("Server : %s client connected.\n", temp);
 
-		msg_size = read(client_fd, buffer, sizeof(buffer));
-		buffer[msg_size] = '\0';
-		printf("Message : %s\n", buffer);
+		msg_size = read(client_fd, buffer, 1024);
+		
+		char systemMessage[100] = "./filename.sh ";
+		strcat(systemMessage, buffer);
+		printf("%s\n", systemMessage);
+
+		// need to call system func (ex. system("%s", buffer);)
+		// system(systemMessage);
 
 		char success_msg[] = "success\n";
 		write(client_fd, success_msg, sizeof(success_msg));
