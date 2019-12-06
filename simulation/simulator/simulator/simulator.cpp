@@ -12,7 +12,7 @@ using namespace std;
 1. 데이터 프로세싱 (local non-atomic) 100 hours
 2. 데이터 업데이트 (global atomic) 50 hours
 3. 딥러닝 학습 (local atomic) 250 hours
-4. 학습 모델로 결과 추출 (local non-atomic) 100 hours
+4. 학습 모델로 결과 추출 (local non-atomic ondemand) 100 hours
 5. 결과 업데이트 (global atomic) 50 hours
 
 m5_4xlarge - us_west_2a 가격 모델 사용
@@ -73,7 +73,7 @@ void init()
 	}
 	in.close();
 
-	spotPrice = 0.335;
+	spotPrice = 0.310;
 	//cout << "set Spot Price: " << spotPrice << "\n";
 	// cin >> spotPrice;
 

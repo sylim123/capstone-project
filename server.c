@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
 		msg_size = read(client_fd, buffer, 1024);
 		
-		char systemMessage[100] = "./control ";
+		char systemMessage[100] = "./virtualBox/control ";
 		strcat(systemMessage, buffer);
 		printf("%s\n", systemMessage);
 
