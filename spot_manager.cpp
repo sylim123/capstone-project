@@ -112,7 +112,7 @@ bool spot_manager::sendMessage()
 
 	string send_msg = "echo ";
 	send_msg += "\"";
-	send_msg += myIP;
+	//send_msg += myIP;
 	send_msg += param1;
 	send_msg += "\" | ";
 	send_msg += ncCommand;
@@ -232,6 +232,12 @@ bool spot_manager::decDemand()
 	return sendMessage();
 }
 
+long long fibo(int n)
+{
+	if(n == 1 || n == 2) return 1;
+	else return fibo(n-1) + fibo(n-2);
+}
+
 int main(void)
 {
 	spot_manager temp;
@@ -240,6 +246,21 @@ int main(void)
 
 	temp.incAtom();
 	temp.printDemand();
+
+	cout << fibo(45) << "\n";
+
+	temp.decAtom();
+	temp.printDemand();
+
+	temp.incDemand();
+	temp.printDemand();
+
+	cout << fibo(44) << "\n";
+
+	temp.decDemand();
+	temp.printDemand();
+
+	temp.exit();
 
 	return 0;
 }
