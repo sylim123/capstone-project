@@ -29,7 +29,7 @@ function loadSnapshot(){
 		return 1
 	fi
 	sqlite3 -batch vminfo.db "UPDATE VM SET ATOMNUM = $prevAtom WHERE NAME = '$1';";
-	VBoxManage clonevm $prevStatus --name $randString && VBoxManage startvm $randString --type headless
+	VBoxManage clonevm $prevStatus --name $randString --register && VBoxManage startvm $randString --type headless
 	return 0
 }
 
@@ -42,7 +42,7 @@ function initSpot(){
 		echo "Error in save state" >&2
 	fi
 	snapshotName=$(getUnusedName)
-	if ! VBoxManage clonevm $1 --name $snapshotName ; then
+	if ! VBoxManage clonevm $1 --name $snapshotName --register ; then
 		echo "Error in clone vm" >&2
 	fi
 	if ! sqlite3 -batch vminfo.db "INSERT INTO VM VALUES ('$1','RUNNING',0,0,0,'$snapshotName','');" ;then
