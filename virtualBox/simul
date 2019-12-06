@@ -1,0 +1,88 @@
+#!/bin/bash
+
+DEFAULT_SAVE_INTERVAL=20
+
+#complite
+function getNameFromIP(){
+#just get the first IP
+	echo "$(VBoxManage list runningvms | cut -d "{" -f1 | sed "s/\"//g")"
+	return 0
+}
+
+#complite
+function init(){
+	if [ ! -z $(sqlite3 -batch vminfo.db "SELECT * FROM VM WHERE NAME='$1';") ]; then
+		sqlite3 -batch vminfo.db "DELETE FROM VM WHERE NAME='$1';"
+		sqlite3 -batch vminfo.db "DELETE FROM LOG WHERE NAME='$1';"
+	fi
+	
+	if ! sqlite3 -batch vminfo.db "INSERT INTO VM VALUES ('$1');" ;then
+		echo "Error in saving DB." >&2
+		return 1
+	fi
+	changeStatus $1 "INIT"
+	return $?
+}
+
+#complite
+function changeStatus(){
+	local curTime=$(date +%s%3N)
+	if ! sqlite3 -batch vminfo.db "INSERT INTO LOG VALUES ('$1','$2',$curTime);" ; then
+		echo "Error in saving DB." >&2
+		return 1
+	fi
+	return 0
+}
+
+function getlog(){
+	echo "inside getlog input is $1"
+	sqlite3 -batch vminfo.db "SELECT * FROM LOG WHERE NAME = '$1';"
+	return $?
+}
+
+
+ACSDIR=~/acs_simul/
+
+
+if [ ! -d $ACSDIR ]; then
+	echo "ACS simul is not installed. Please execute install.sh first" >&2
+	exit 1
+fi
+
+cd $ACSDIR
+
+vmName=$(getNameFromIP)
+if [ -z "$vmName" ]; then
+	echo 'There is no running vm.' >&2
+	exit 0
+fi
+
+
+case $1 in
+	"INIT_ONDEMAND"|"INIT")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		init $vmName
+		exit $?
+		;;
+	"CHANGE_STATUS")
+		if [ "$#" -ne 2 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		changeStatus $vmName $2
+		exit $?
+		;;
+	"GETLOG")
+		if [ "$#" -ne 2 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		getlog $2
+		exit $?
+		;;
+esac
+
+exit 1

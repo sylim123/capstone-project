@@ -1,0 +1,183 @@
+#!/bin/bash
+
+#complite
+function getNameFromIP(){
+	echo $(VBoxManage list runningvms | cut -d "{" -f1 | sed "s/\"//g")
+	return 0
+}
+
+#complite
+function getUnusedName(){
+	while : ; do
+		randString=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)
+		if  ! VBoxManage list vms | awk '{print $1}'| grep -q "$randString" ; then
+			echo $randString
+			break
+		fi
+	done
+	return 0
+}
+
+
+#complite
+function loadSnapshot(){
+	local randString=$(getUnusedName)
+	local prevStatus=$(sqlite3 -batch vminfo.db "SELECT SAVEDATA FROM VM WHERE NAME = '$1' ;")
+	local prevAtom=$(sqlite3 -batch vminfo.db "SELECT PREVATOMNUM FROM VM WHERE NAME = '$1' ;")
+	if ! sqlite3 -batch vminfo.db "UPDATE VM SET CURDATA='$randString' WHERE NAME = '$1';"; then
+		echo "Error in saving DB." >&2
+		return 1
+	fi
+	sqlite3 -batch vminfo.db "UPDATE VM SET ATOMNUM = $prevAtom WHERE NAME = '$1';";
+	VBoxManage clonevm $prevStatus --name $randString && VBoxManage startvm $randString --type headless
+	return 0
+}
+
+#complite
+function initSpot(){
+	if [ ! -z $(sqlite3 -batch vminfo.db "SELECT * FROM VM WHERE NAME='$1';") ] ; then
+		sqlite3 -batch vminfo.db "DELETE FROM VM WHERE NAME='$1';"
+	fi
+	if ! VBoxManage controlvm $1 savestate ; then
+		echo "Error in save state" >&2
+	fi
+	snapshotName=$(getUnusedName)
+	if ! VBoxManage clonevm $1 --name $snapshotName ; then
+		echo "Error in clone vm" >&2
+	fi
+	if ! sqlite3 -batch vminfo.db "INSERT INTO VM VALUES ('$1','RUNNING',0,0,0,'$snapshotName','');" ;then
+		echo "Error in saving DB." >&2
+		return 1
+	fi
+	loadSnapshot $1
+	return $?
+}
+#complete
+function end(){
+	local saveAddr=$(sqlite3 -batch vminfo.db "SELECT CURDATA FROM VM WHERE NAME = '$1';")
+	echo "$1 ends in $saveAddr"
+	return 0
+}
+
+#complete
+function inc_atom(){
+	local numAtom=$(sqlite3 -batch vminfo.db "SELECT ATOMNUM FROM VM WHERE NAME='$1';")
+	local numDemand=$(sqlite3 -batch vminfo.db "SELECT DEMANDNUM FROM VM WHERE NAME='$1';")
+	sqlite3 -batch vminfo "UPDATE VM SET ATOMNUM = $(($numAtom + 1)) WHERE NAME ='$1';"
+	exit 0
+}
+#complete
+function inc_demand(){
+	local numDemand=$(sqlite3 -batch vminfo.db "SELECT DEMANDNUM FROM VM WHERE NAME='$1';")
+	sqlite3 -batch vminfo "UPDATE VM SET DEMANDNUM = $(($numDemand + 1)) WHERE NAME ='$1';"
+	if  [numDemand -eq 0];then
+		changeStatus $1 "DEMAND"
+	fi
+	exit 0
+}
+#complete
+function dec_atom(){
+	local numAtom=$(sqlite3 -batch vminfo.db "SELECT ATOMNUM FROM VM WHERE NAME='$1';")
+	local numDemand=$(sqlite3 -batch vminfo.db "SELECT DEMANDNUM FROM VM WHERE NAME='$1';")
+	sqlite3 -batch vminfo "UPDATE VM SET ATOMNUM = $(($numAtom - 1)) WHERE NAME ='$1';"
+	if [ numAtom -eq 1 ] && [numDemand -eq 0];then
+		changeStatus $1 "RUNNING"
+	fi
+	exit 0
+}
+#complete
+function dec_demand(){
+	local numAtom=$(sqlite3 -batch vminfo.db "SELECT ATOMNUM FROM VM WHERE NAME='$1';")
+	local numDemand=$(sqlite3 -batch vminfo.db "SELECT DEMANDNUM FROM VM WHERE NAME='$1';")
+	sqlite3 -batch vminfo "UPDATE VM SET DEMANDNUM = $(($numDemand - 1)) WHERE NAME ='$1';"
+	if [ numAtom -eq 0 ] && [numDemand -eq 1];then
+		changeStatus $1 "RUNNING"
+	fi
+	exit 0
+}
+
+#complite
+function changeStatus(){
+	if ! sqlite3 -batch vminfo.db "UPDATE VM SET STATUS = '$2' WHERE NAME = '$1' ;" ; then
+		echo "Error in saving DB." >&2
+		return 1
+	fi
+	return 0
+}
+
+ACSDIR=~/acs/
+
+if [ ! -d $ACSDIR ]; then
+	echo "ACS is not installed. Please execute install.sh first" >&2
+	exit 1
+fi
+
+cd $ACSDIR
+
+vmName=$(getNameFromIP)
+
+case $1 in
+	"PRINT_DEMAND")
+		numDemand=$(sqlite3 -batch vminfo.db "SELECT DEMANDNUM FROM VM WHERE NAME='$vmName';")
+		echo $numDemand
+		exit 0
+		;;
+	"INIT")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		initSpot $vmName 
+		exit $?
+		;;
+	"END")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		end $vmName
+		exit $?
+		;;
+	"INC_ATOM")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		inc_atom $vmName
+		exit $_
+		;;
+	"INC_DEMAND")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		inc_demand $vmName
+		exit $_
+		;;
+	"DEC_ATOM")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		dec_atom $vmName
+		exit $_
+		;;
+	"DEC_DEMAND")
+		if [ "$#" -ne 1 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		dec_demand $vmName
+		exit $_
+		;;
+	"CHANGE_STATUS")
+		if [ "$#" -ne 2 ]; then
+			echo 'Please check the number of parameters.' >&2
+			exit 1
+		fi
+		changeStatus $vmName $2
+		exit $?
+		;;
+esac
+
+exit 1

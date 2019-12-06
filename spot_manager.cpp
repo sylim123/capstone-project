@@ -2,31 +2,66 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string>
-#include "spot_manager.h"
 
 #define PORT_NUMBER 12345
 
 using namespace std;
 
-SpotManager::SpotManager()
+class spot_manager
+{
+private:
+	std::string ncCommand, myIP, hostIP;
+	std::string param1, param2;
+	int saveInterval;
+	float price;
+	bool initFlag;
+	void setPrice(float);
+
+	bool getMyIP();
+	bool getHostIP();
+	bool sendMessage(); 
+
+public:
+	spot_manager();
+	~spot_manager();
+	
+	bool init(float);
+	bool exit();
+	bool printDemand();
+
+	bool incAtom();
+	bool decAtom();
+
+	bool incDemand();
+	bool decDemand();
+	
+	bool changePrice(float);
+
+	bool startOndemand();
+	bool endOndemand();
+
+	bool changeSaveInterval(int);
+};
+
+spot_manager::spot_manager()
 {
 	saveInterval = 20;
 	price = 0.0;
 	initFlag = false;
 }
 
-SpotManager::~SpotManager()
+spot_manager::~spot_manager()
 {
 }
 
-void SpotManager::setPrice(float userPrice)
+void spot_manager::setPrice(float userPrice)
 {
 	price = userPrice;
 	param1 = "CHANGE_PRICE";
 	param2 = to_string(price);
 }
 
-bool SpotManager::getMyIP()
+bool spot_manager::getMyIP()
 {
 	char tempBuffer[50];
 	FILE *fp;
@@ -45,7 +80,7 @@ bool SpotManager::getMyIP()
 	return true;
 }
 
-bool SpotManager::getHostIP()
+bool spot_manager::getHostIP()
 {
 	char tempBuffer[500];
 	FILE *fp;
@@ -67,7 +102,7 @@ bool SpotManager::getHostIP()
 	return true;
 }
 
-bool SpotManager::sendMessage()
+bool spot_manager::sendMessage()
 {
 	if(initFlag == false)
 	{
@@ -79,8 +114,6 @@ bool SpotManager::sendMessage()
 	send_msg += "\"";
 	send_msg += myIP;
 	send_msg += param1;
-	send_msg += " ";
-	send_msg += param2;
 	send_msg += "\" | ";
 	send_msg += ncCommand;
 
@@ -90,8 +123,9 @@ bool SpotManager::sendMessage()
 	fp = popen(send_msg.c_str(), "r");
 
 	if(fp == NULL) return false;
-	
+
 	fgets(tempBuffer, sizeof(tempBuffer), fp);
+
 	if(pclose(fp) == -1) return false;;
 
 	string result(tempBuffer);
@@ -100,7 +134,7 @@ bool SpotManager::sendMessage()
 	else return false;
 }
 
-bool SpotManager::init(float userPrice)
+bool spot_manager::init(float userPrice)
 {
 	initFlag = true;
 
@@ -115,44 +149,43 @@ bool SpotManager::init(float userPrice)
 	ncCommand += hostIP;
 	ncCommand += to_string(PORT_NUMBER);
 
-	setPrice(userPrice);
+	//setPrice(userPrice);
+
+	param1 = "INIT";
 
 	return sendMessage();
 }
 
-bool SpotManager::exit()
+bool spot_manager::exit()
 {
 	// need to fill out something
-	param1 = "param1";
-	param2 = "param2";
+	param1 = "END";
 
 	return sendMessage();
 }
 
-bool SpotManager::startAtom()
+bool spot_manager::incAtom()
 {
-	param1 = "CHANGE_STATUS";
-	param2 = "RUN_SPOT_NO_SAVE";
+	param1 = "INC_ATOM";
 
 	return sendMessage();
 }
 
-bool SpotManager::endAtom()
+bool spot_manager::decAtom()
 {
-	param1 = "CHANGE_STATUS";
-	param2 = "RUN_SPOT";
+	param1 = "DEC_ATOM";
 
 	return sendMessage();
 }
 
-bool SpotManager::changePrice(float userPrice)
+bool spot_manager::changePrice(float userPrice)
 {
 	setPrice(userPrice);
 	
 	return sendMessage();
 }
 
-bool SpotManager::startOndemand()
+bool spot_manager::startOndemand()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_ONDEMAND";
@@ -160,7 +193,7 @@ bool SpotManager::startOndemand()
 	return sendMessage();
 }
 
-bool SpotManager::endOndemand()
+bool spot_manager::endOndemand()
 {
 	param1 = "CHANGE_STATUS";
 	param2 = "RUN_SPOT";
@@ -168,7 +201,7 @@ bool SpotManager::endOndemand()
 	return sendMessage();
 }
 
-bool SpotManager::changeSaveInterval(int interval)
+bool spot_manager::changeSaveInterval(int interval)
 {
 	saveInterval = interval;
 
@@ -178,13 +211,35 @@ bool SpotManager::changeSaveInterval(int interval)
 	return sendMessage();
 }
 
+bool spot_manager::printDemand()
+{
+	param1 = "PRINT_DEMAND";
+
+	return sendMessage();
+}
+
+bool spot_manager::incDemand()
+{
+	param1 = "INC_DEMAND";
+
+	return sendMessage();
+}
+
+bool spot_manager::decDemand()
+{
+	param1 = "DEC_DEMAND";
+
+	return sendMessage();
+}
+
 int main(void)
 {
-	SpotManager spot;
-	spot.init(1.5);
-	spot.startOndemand();
+	spot_manager temp;
+	temp.init(0.0);
+	temp.printDemand();
+
+	temp.incAtom();
+	temp.printDemand();
 
 	return 0;
 }
-
-

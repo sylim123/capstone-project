@@ -64,12 +64,11 @@ int main(int argc, char *argv[])
 
 		msg_size = read(client_fd, buffer, 1024);
 		
-		char systemMessage[100] = "./filename.sh ";
+		char systemMessage[100] = "./control ";
 		strcat(systemMessage, buffer);
 		printf("%s\n", systemMessage);
 
-		// need to call system func (ex. system("%s", buffer);)
-		// system(systemMessage);
+		system(systemMessage);
 
 		char success_msg[] = "success\n";
 		write(client_fd, success_msg, sizeof(success_msg));
