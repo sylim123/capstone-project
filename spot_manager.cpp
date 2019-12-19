@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string>
+#include <unistd.h>
 
 #define PORT_NUMBER 12345
 
@@ -242,23 +243,33 @@ int main(void)
 {
 	spot_manager temp;
 	temp.init(0.0);
+	usleep(10000 * 1000);
 	temp.printDemand();
+	usleep(1000 * 1000);
 
 	temp.incAtom();
+	usleep(2000 * 1000);
 	temp.printDemand();
+	usleep(1000 * 1000);
 
 	cout << fibo(45) << "\n";
 
 	temp.decAtom();
+	usleep(2000 * 1000);
 	temp.printDemand();
+	usleep(1000 * 1000);
 
 	temp.incDemand();
+	usleep(2000 * 1000);
 	temp.printDemand();
+	usleep(1000 * 1000);
 
 	cout << fibo(44) << "\n";
 
 	temp.decDemand();
+	usleep(2000 * 1000);
 	temp.printDemand();
+	usleep(1000 * 1000);
 
 	temp.exit();
 
