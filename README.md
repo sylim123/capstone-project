@@ -1,5 +1,11 @@
 # capstone-project
 
+# Poster
+https://drive.google.com/open?id=1xlV9b4VMs9uck9x4UAhAlIOiCfyzSzJr
+
+# Report
+https://drive.google.com/open?id=1FZ0wJB2BKh-dbX7ZV8bNR7Tjv0tdYAHz
+
 Photos
 -----------
 
